@@ -1,0 +1,100 @@
+package Intern;
+
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+
+public class StudentGradeCalculator1 extends JFrame implements ActionListener {
+    private JTextField[] markFields;
+    private JButton calculateButton;
+    private JTextArea resultArea;
+    private JTextField subjectCountField;
+
+    public StudentGradeCalculator1() {
+        setTitle("Student Grade Calculator");
+        setSize(400, 300);
+        setDefaultCloseOperation(EXIT_ON_CLOSE);
+        setLayout(new FlowLayout());
+
+        JLabel subjectCountLabel = new JLabel("Enter number of subjects:");
+        subjectCountField = new JTextField(5);
+        JButton createFieldsButton = new JButton("Create Fields");
+
+        add(subjectCountLabel);
+        add(subjectCountField);
+        add(createFieldsButton);
+
+        createFieldsButton.addActionListener(e -> createMarkFields());
+
+        calculateButton = new JButton("Calculate Grade");
+        calculateButton.addActionListener(this);
+        add(calculateButton);
+
+        resultArea = new JTextArea(10, 30);
+        resultArea.setEditable(false);
+        add(new JScrollPane(resultArea));
+
+        setVisible(true);
+    }
+
+    private void createMarkFields() {
+        try {
+            int numSubjects = Integer.parseInt(subjectCountField.getText());
+            remove(calculateButton);  // Remove existing button if any
+            remove(resultArea);        // Clear previous results
+
+            markFields = new JTextField[numSubjects];
+            for (int i = 0; i < numSubjects; i++) {
+                markFields[i] = new JTextField(5);
+                add(new JLabel("Subject " + (i + 1) + ":"));
+                add(markFields[i]);
+            }
+
+            add(calculateButton);
+            resultArea.setText("");  // Clear previous results
+            revalidate();
+            repaint();
+        } catch (NumberFormatException e) {
+            JOptionPane.showMessageDialog(this, "Please enter a valid number of subjects.");
+        }
+    }
+
+    @Override
+    public void actionPerformed(ActionEvent e) {
+        int totalMarks = 0;
+        int numSubjects = markFields.length;
+
+        try {
+            for (JTextField field : markFields) {
+                int marks = Integer.parseInt(field.getText());
+                if (marks < 0 || marks > 100) {
+                    throw new NumberFormatException();
+                }
+                totalMarks += marks;
+            }
+
+            double averagePercentage = (double) totalMarks / numSubjects;
+            String grade = calculateGrade(averagePercentage);
+
+            resultArea.setText("Total Marks: " + totalMarks + " out of " + (numSubjects * 100) +
+                    "\nAverage Percentage: " + String.format("%.2f%%", averagePercentage) +
+                    "\nGrade: " + grade);
+        } catch (NumberFormatException ex) {
+            JOptionPane.showMessageDialog(this, "Please enter valid marks (0-100) for all subjects.");
+        }
+    }
+
+    private String calculateGrade(double averagePercentage) {
+        if (averagePercentage >= 90) return "A+";
+        else if (averagePercentage >= 80) return "A";
+        else if (averagePercentage >= 70) return "B";
+        else if (averagePercentage >= 60) return "C";
+        else if (averagePercentage >= 50) return "D";
+        else return "F";
+    }
+
+    public static void main(String[] args) {
+        new StudentGradeCalculator1();
+    }
+}
