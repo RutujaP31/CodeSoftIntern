@@ -1,0 +1,207 @@
+package Intern;
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+class Student {
+    private String name;
+    private String rollNumber;
+    private String grade;
+
+    public Student(String name, String rollNumber, String grade) {
+        this.name = name;
+        this.rollNumber = rollNumber;
+        this.grade = grade;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public String getRollNumber() {
+        return rollNumber;
+    }
+
+    public String getGrade() {
+        return grade;
+    }
+
+    @Override
+    public String toString() {
+        return "Name: " + name + ", Roll Number: " + rollNumber + ", Grade: " + grade;
+    }
+}
+    class StudentManagementSystem {
+    private List<Student> students;
+    private final String filePath = "students.txt"; // File to store student data
+
+    public StudentManagementSystem() {
+        students = new ArrayList<>();
+        loadStudents();
+    }
+
+    public void addStudent(Student student) {
+        students.add(student);
+        saveStudents();
+    }
+
+    public void removeStudent(String rollNumber) {
+        students.removeIf(student -> student.getRollNumber().equals(rollNumber));
+        saveStudents();
+    }
+
+    public Student searchStudent(String rollNumber) {
+        for (Student student : students) {
+            if (student.getRollNumber().equals(rollNumber)) {
+                return student;
+            }
+        }
+        return null;
+    }
+
+    public List<Student> getAllStudents() {
+        return students;
+    }
+
+    private void loadStudents() {
+        try (BufferedReader br = new BufferedReader(new FileReader(filePath))) {
+            String line;
+            while ((line = br.readLine()) != null) {
+                String[] data = line.split(",");
+                if (data.length == 3) {
+                    students.add(new Student(data[0], data[1], data[2]));
+                }
+            }
+        } catch (IOException e) {
+            System.out.println("Error loading student data: " + e.getMessage());
+        }
+    }
+
+    private void saveStudents() {
+        try (BufferedWriter bw = new BufferedWriter(new FileWriter(filePath))) {
+            for (Student student : students) {
+                bw.write(student.getName() + "," + student.getRollNumber() + "," + student.getGrade());
+                bw.newLine();
+            }
+        } catch (IOException e) {
+            System.out.println("Error saving student data: " + e.getMessage());
+        }
+    }
+}
+
+public class StudentManagementGUI extends JFrame implements ActionListener {
+    private StudentManagementSystem sms;
+    private JTextField nameField, rollField, gradeField, searchField;
+    private JTextArea displayArea;
+
+    public StudentManagementGUI() {
+        sms = new StudentManagementSystem();
+
+        setTitle("Student Management System");
+        setSize(400, 400);
+        setDefaultCloseOperation(EXIT_ON_CLOSE);
+        setLayout(new FlowLayout());
+
+        // Input fields
+        nameField = new JTextField(10);
+        rollField = new JTextField(10);
+        gradeField = new JTextField(10);
+        searchField = new JTextField(10);
+        displayArea = new JTextArea(10, 30);
+        displayArea.setEditable(false);
+
+        JButton addButton = new JButton("Add Student");
+        JButton removeButton = new JButton("Remove Student");
+        JButton searchButton = new JButton("Search Student");
+        JButton displayButton = new JButton("Display Students");
+
+        addButton.addActionListener(this);
+        removeButton.addActionListener(this);
+        searchButton.addActionListener(this);
+        displayButton.addActionListener(this);
+
+        add(new JLabel("Name:"));
+        add(nameField);
+        add(new JLabel("Roll Number:"));
+        add(rollField);
+        add(new JLabel("Grade:"));
+        add(gradeField);
+        add(addButton);
+        add(removeButton);
+        add(new JLabel("Search Roll Number:"));
+        add(searchField);
+        add(searchButton);
+        add(displayButton);
+        add(new JScrollPane(displayArea));
+
+        setVisible(true);
+    }
+
+    @Override
+    public void actionPerformed(ActionEvent e) {
+        String command = e.getActionCommand();
+
+        switch (command) {
+            case "Add Student":
+                String name = nameField.getText().trim();
+                String rollNumber = rollField.getText().trim();
+                String grade = gradeField.getText().trim();
+
+                if (name.isEmpty() || rollNumber.isEmpty() || grade.isEmpty()) {
+                    JOptionPane.showMessageDialog(this, "All fields must be filled.");
+                    return;
+                }
+
+                sms.addStudent(new Student(name, rollNumber, grade));
+                clearFields();
+                break;
+
+            case "Remove Student":
+                rollNumber = rollField.getText().trim();
+                if (rollNumber.isEmpty()) {
+                    JOptionPane.showMessageDialog(this, "Roll Number must be provided.");
+                    return;
+                }
+                sms.removeStudent(rollNumber);
+                clearFields();
+                break;
+
+            case "Search Student":
+                rollNumber = searchField.getText().trim();
+                Student student = sms.searchStudent(rollNumber);
+                if (student != null) {
+                    displayArea.setText(student.toString());
+                } else {
+                    displayArea.setText("Student not found.");
+                }
+                break;
+
+            case "Display Students":
+                List<Student> students = sms.getAllStudents();
+                displayArea.setText("");
+                for (Student s : students) {
+                    displayArea.append(s.toString() + "\n");
+                }
+                break;
+        }
+   
+}
+
+    private void clearFields() {
+        nameField.setText("");
+        rollField.setText("");
+        gradeField.setText("");
+        searchField.setText("");
+    }
+
+    public static void main(String[] args) {
+        new StudentManagementGUI();
+    }
+}
