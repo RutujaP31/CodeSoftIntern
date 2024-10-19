@@ -1,0 +1,103 @@
+package Intern;
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.URL;
+
+public class CurrencyConverter1 extends JFrame implements ActionListener {
+    private JComboBox<String> baseCurrencyCombo;
+    private JComboBox<String> targetCurrencyCombo;
+    private JTextField amountField;
+    private JTextArea resultArea;
+    private JButton convertButton;
+
+    // Sample currency codes for demonstration
+    private static final String[] CURRENCY_CODES = {"USD", "EUR", "GBP", "INR", "JPY"};
+
+    public CurrencyConverter1() {
+        setTitle("Currency Converter");
+        setSize(400, 300);
+        setDefaultCloseOperation(EXIT_ON_CLOSE);
+        setLayout(new FlowLayout());
+
+        JLabel amountLabel = new JLabel("Amount:");
+        amountField = new JTextField(10);
+        
+        JLabel baseCurrencyLabel = new JLabel("Base Currency:");
+        baseCurrencyCombo = new JComboBox<>(CURRENCY_CODES);
+        
+        JLabel targetCurrencyLabel = new JLabel("Target Currency:");
+        targetCurrencyCombo = new JComboBox<>(CURRENCY_CODES);
+        
+        convertButton = new JButton("Convert");
+        convertButton.addActionListener(this);
+        
+        resultArea = new JTextArea(5, 30);
+        resultArea.setEditable(false);
+
+        add(amountLabel);
+        add(amountField);
+        add(baseCurrencyLabel);
+        add(baseCurrencyCombo);
+        add(targetCurrencyLabel);
+        add(targetCurrencyCombo);
+        add(convertButton);
+        add(new JScrollPane(resultArea));
+
+        setVisible(true);
+    }
+
+    @Override
+    public void actionPerformed(ActionEvent e) {
+        if (e.getSource() == convertButton) {
+            String baseCurrency = (String) baseCurrencyCombo.getSelectedItem();
+            String targetCurrency = (String) targetCurrencyCombo.getSelectedItem();
+            double amount;
+
+            try {
+                amount = Double.parseDouble(amountField.getText());
+                double exchangeRate = fetchExchangeRate(baseCurrency, targetCurrency);
+                double convertedAmount = amount * exchangeRate;
+                resultArea.setText(String.format("%.2f %s = %.2f %s", amount, baseCurrency, convertedAmount, targetCurrency));
+            } catch (NumberFormatException ex) {
+                resultArea.setText("Please enter a valid amount.");
+            } catch (Exception ex) {
+                resultArea.setText("Error fetching exchange rate: " + ex.getMessage());
+            }
+        }
+    }
+
+    private double fetchExchangeRate(String baseCurrency, String targetCurrency) throws Exception {
+        // Mock exchange rate (for demonstration purposes)
+        // Replace this with actual API request code
+        String urlString = "https://api.exchangerate-api.com/v4/latest/" + baseCurrency; // Replace with a real API endpoint
+        URL url = new URL(urlString);
+        HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+        connection.setRequestMethod("GET");
+        
+        if (connection.getResponseCode() == 200) {
+            BufferedReader in = new BufferedReader(new InputStreamReader(connection.getInputStream()));
+            StringBuilder response = new StringBuilder();
+            String inputLine;
+            while ((inputLine = in.readLine()) != null) {
+                response.append(inputLine);
+            }
+            in.close();
+            // Parse JSON to get the exchange rate
+            String jsonResponse = response.toString();
+            // Assuming the JSON structure is {"rates": {"EUR": rate, ...}}
+            String targetCurrencyRate = jsonResponse.split("\"" + targetCurrency + "\":")[1].split(",")[0];
+            return Double.parseDouble(targetCurrencyRate);
+        } else {
+            throw new Exception("Failed to fetch exchange rate.");
+        }
+    }
+
+    public static void main(String[] args) {
+        new CurrencyConverter1();
+    }
+}
